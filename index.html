@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atanazy · 白盒岛</title>
+<style>
+:root{
+  --brand:#4e73df;
+  --brand2:#1cc88a;
+  --bg:#f5f7fa;
+  --text:#333;
+  --muted:#667085;
+  --card:#fff;
+  --shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Microsoft Yahei",sans-serif;background:var(--bg);color:var(--text)}
+header{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:#fff;
+  padding:40px 16px;
+  text-align:center;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+header h1{margin:0;font-size:28px;text-shadow:1px 1px 4px rgba(0,0,0,0.3)}
+header p{margin:.5rem 0 0;font-size:16px;opacity:.9}
+main{max-width:1100px;margin:20px auto;padding:0 16px 40px}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 20px}
+.search{flex:1;min-width:220px}
+input[type="search"]{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid #d0d5dd;
+  border-radius:12px;
+  transition:.2s;
+}
+input[type="search"]:focus{border-color:var(--brand);outline:none;box-shadow:0 0 10px rgba(78,115,223,0.2)}
+.release{
+  background:var(--card);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:16px;
+  margin:14px 0;
+  transition:.2s;
+}
+.release:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.release h2{margin:0 0 10px;font-size:18px;color:var(--brand)}
+.desc{margin:8px 0;color:#444;font-size:14px;white-space:pre-wrap}
+.assets{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.asset{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid #eee;border-radius:12px;padding:10px;background:#fff;transition:.2s}
+.asset:hover{background:#f0f4ff}
+.left{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{font-size:12px;border-radius:8px;padding:4px 8px;background:#eef2ff;color:#3b3f7a}
+.btn{display:inline-block;padding:8px 14px;border-radius:12px;background:var(--brand2);color:#fff;text-decoration:none;font-weight:700;transition:.2s}
+.btn:hover{filter:brightness(.95)}
+.hint{padding:12px;border-radius:12px;background:#fffbea;color:#8a6d00;border:1px solid #ffe58f}
+footer{padding:24px 16px;text-align:center;color:#666;font-size:13px}
+.meta-chinese{font-size:13px;color:#1cc88a;margin-top:2px;}
+@media (max-width:640px){
+  .asset{flex-direction:column;align-items:flex-start;gap:8px}
+  .btn{width:100%;text-align:center}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>~ 欢迎来到 Atanazy28 的白盒岛 ~</h1>
+  <p>🎈可自行下载软件 🎶，请勿🙅‍当作商用 📦</p>
+</header>
+
+<main>
+  <div class="controls">
+    <div class="search">
+      <input id="q" type="search" placeholder="搜索 Release 文件名..." />
+    </div>
+  </div>
+  <div id="panel" class="panel"></div>
+  <div id="msg"></div>
+</main>
+
+<footer>© <span id="year"></span> 白盒岛 | Powered by GitHub Pages</footer>
+
+<script>
+// 软件仓库 Releases 配置
+const repo={owner:"Atanazy28",repo:"Software-Repository"};
+
+const $panel=document.getElementById("panel");
+const $msg=document.getElementById("msg");
+const $q=document.getElementById("q");
+document.getElementById("year").textContent=new Date().getFullYear();
+
+let state={data:[],filter:""};
+
+// 文件名中文映射
+const fileNameMap = {
+  "setup.exe":"安装程序",
+  "manual.pdf":"使用说明书",
+  "tool.zip":"工具包",
+  "demo.pptx":"演示文稿"
+};
+
+function displayName(name){return fileNameMap[name]||name;}
+function esc(s){return(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function formatBytes(n){if(!Number.isFinite(n))return"";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++;}return n.toFixed(n>=100?0:n>=10?1:2)+" "+u[i];}
+function iconByName(name=""){
+  const n=name.toLowerCase();
+  if(n.endsWith(".zip")||n.endsWith(".7z")||n.endsWith(".rar")||n.endsWith(".tar.gz"))return"🗜️";
+  if(n.endsWith(".exe")||n.endsWith(".msi"))return"🧩";
+  if(n.endsWith(".apk"))return"📱";
+  if(n.endsWith(".dmg")||n.endsWith(".pkg"))return"🍎";
+  if(n.endsWith(".deb")||n.endsWith(".rpm"))return"🐧";
+  if(n.endsWith(".pdf"))return"📕";
+  if(n.endsWith(".doc")||n.endsWith(".docx"))return"📝";
+  if(n.endsWith(".ppt")||n.endsWith(".pptx"))return"📊";
+  if(n.endsWith(".xlsx")||n.endsWith(".xls"))return"📈";
+  if(n.endsWith(".txt")||n.endsWith(".md"))return"📄";
+  return"📦";
+}
+
+// 加载 Releases
+async function loadReleases(){
+  const api=`https://api.github.com/repos/${repo.owner}/${repo.repo}/releases?per_page=30`;
+  try{
+    const res=await fetch(api,{headers:{"Accept":"application/vnd.github+json"}});
+    if(!res.ok){const text=await res.text();throw new Error(`GitHub API ${res.status}: ${text.slice(0,200)}`);}
+    const releases=await res.json();
+    state.data=releases;
+    renderReleases();
+  }catch(err){
+    console.error(err);
+    $msg.innerHTML=`<div class="hint">无法加载 Releases：${esc(err.message)}</div>`;
+  }
+}
+
+function renderReleases(){
+  const filter=state.filter.trim().toLowerCase();
+  let list=state.data.slice();
+  const html=list.map(rel=>{
+    const assets=(rel.assets||[]).filter(a=>!filter||a.name.toLowerCase().includes(filter));
+    const hasAssets=assets.length>0;
+    return `<section class="release">
+      <h2>${esc(rel.name||rel.tag_name||"未命名 Release")}</h2>
+      <div class="meta">版本：${esc(rel.tag_name||"-")}　发布时间：${rel.published_at?new Date(rel.published_at).toLocaleString():"-"}</div>
+      ${rel.body?`<div class="desc">${esc(rel.body)}</div>`:""}
+      ${hasAssets?`<ul class="assets">${assets.map(a=>`<li class="asset">
+        <div class="left">
+          <span>${iconByName(a.name)}</span>
+          <div style="min-width:0">
+            <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(displayName(a.name))}</div>
+            <div class="meta meta-chinese">${esc(a.name)}</div>
+            <div class="meta">大小：${formatBytes(a.size)}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn" href="${a.browser_download_url}" rel="noopener">下载</a>
+          <button class="btn" onclick="copyLink('${a.browser_download_url.replace(/'/g,'%27')}')">复制链接</button>
+        </div>
+      </li>`).join("")}</ul>`:`<div class="hint">此 Release 暂无附件</div>`}
+    </section>`;
+  }).join("");
+  $panel.innerHTML=html||`<div class="hint">没有可显示的 Release</div>`;
+}
+
+// 复制链接
+function copyLink(url){
+  navigator.clipboard.writeText(url).then(()=>alert("下载直链已复制到剪贴板"),()=>prompt("复制失败，请手动复制：",url));
+}
+
+// 搜索事件
+$q.addEventListener("input",()=>{state.filter=$q.value;renderReleases();});
+
+// 初始化
+loadReleases();
+</script>
+</body>
+</html>
