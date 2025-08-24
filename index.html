@@ -66,9 +66,25 @@ input[type="search"]:focus{border-color:var(--brand);outline:none;box-shadow:0 0
   max-width:100%;
 }
 .asset:hover{background:#f0f4ff}
-.left{display:flex;align-items:center;gap:10px;min-width:0;flex:1;overflow:hidden}
-.left div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{font-size:12px;border-radius:8px;padding:4px 8px;background:#eef2ff;color:#3b3f7a}
+.left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  flex:1;
+  overflow:hidden;
+}
+.left .main-name{
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.left .meta-chinese,
+.left .meta{
+  white-space:normal;
+  word-break:break-all;
+}
 .btn{
   display:inline-block;
   padding:8px 14px;
@@ -85,15 +101,11 @@ footer{padding:24px 16px;text-align:center;color:#666;font-size:13px}
 .meta-chinese{font-size:13px;color:#1cc88a;margin-top:2px;}
 
 /* ========= 响应式断点 ========= */
-
-/* 普通桌面 ≤1199px */
 @media (max-width:1199px){
   header h1{font-size:26px;}
   header p{font-size:15px;}
   main{max-width:900px;}
 }
-
-/* 平板 ≤767px */
 @media (max-width:767px){
   header{padding:28px 14px;}
   header h1{font-size:24px;}
@@ -104,8 +116,6 @@ footer{padding:24px 16px;text-align:center;color:#666;font-size:13px}
   .controls{flex-direction:column;align-items:stretch;}
   .search{width:100%;}
 }
-
-/* 手机 ≤479px */
 @media (max-width:479px){
   header{padding:20px 10px;}
   header h1{font-size:20px;}
@@ -122,10 +132,6 @@ footer{padding:24px 16px;text-align:center;color:#666;font-size:13px}
   .asset .left{
     width:100%;
     overflow:hidden;
-  }
-  .asset .left div{
-    white-space:normal;
-    word-break:break-all; /* 文件名可换行 */
   }
   .btn{
     width:100%;
@@ -153,24 +159,18 @@ footer{padding:24px 16px;text-align:center;color:#666;font-size:13px}
 <footer>© <span id="year"></span> 白盒岛 | Powered by GitHub Pages</footer>
 
 <script>
-// 软件仓库 Releases 配置
 const repo={owner:"Atanazy28",repo:"Software-Repository"};
-
 const $panel=document.getElementById("panel");
 const $msg=document.getElementById("msg");
 const $q=document.getElementById("q");
 document.getElementById("year").textContent=new Date().getFullYear();
-
 let state={data:[],filter:""};
-
-// 文件名中文映射
 const fileNameMap = {
   "setup.exe":"安装程序",
   "manual.pdf":"使用说明书",
   "tool.zip":"工具包",
   "demo.pptx":"演示文稿"
 };
-
 function displayName(name){return fileNameMap[name]||name;}
 function esc(s){return(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function formatBytes(n){if(!Number.isFinite(n))return"";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++;}return n.toFixed(n>=100?0:n>=10?1:2)+" "+u[i];}
@@ -189,7 +189,6 @@ function iconByName(name=""){
   return"📦";
 }
 
-// 加载 Releases
 async function loadReleases(){
   const api=`https://api.github.com/repos/${repo.owner}/${repo.repo}/releases?per_page=30`;
   try{
@@ -218,7 +217,7 @@ function renderReleases(){
         <div class="left">
           <span>${iconByName(a.name)}</span>
           <div>
-            <div style="font-weight:600;">${esc(displayName(a.name))}</div>
+            <div class="main-name">${esc(displayName(a.name))}</div>
             <div class="meta meta-chinese">${esc(a.name)}</div>
             <div class="meta">大小：${formatBytes(a.size)}</div>
           </div>
@@ -233,15 +232,11 @@ function renderReleases(){
   $panel.innerHTML=html||`<div class="hint">没有可显示的 Release</div>`;
 }
 
-// 复制链接
 function copyLink(url){
   navigator.clipboard.writeText(url).then(()=>alert("下载直链已复制到剪贴板"),()=>prompt("复制失败，请手动复制：",url));
 }
 
-// 搜索事件
 $q.addEventListener("input",()=>{state.filter=$q.value;renderReleases();});
-
-// 初始化
 loadReleases();
 </script>
 </body>
